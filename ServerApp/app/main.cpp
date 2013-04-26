@@ -1,10 +1,10 @@
-#include "tcpHandler.hpp"
+#include "controller.hpp"
 #include <Windows.h>
 
 int main ()
 {
-    tcpServer server;
-    server.start ();
+    controller ctrl;
+    ctrl.start ();
 
     Sleep (INFINITE);
     return 0;

@@ -41,7 +41,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>app;framework\communication;framework\sys;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\app;.\framework\communication;.\framework\sys;..\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -62,12 +62,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="app\controller.cpp" />
     <ClCompile Include="app\main.cpp" />
+    <ClCompile Include="framework\communication\comPortHandler.cpp" />
     <ClCompile Include="framework\communication\tcpHandler.cpp" />
     <ClCompile Include="framework\sys\msgQueueHandler.cpp" />
     <ClCompile Include="framework\sys\mutexHandler.cpp" />
     <ClCompile Include="framework\sys\semaphoreHandler.cpp" />
     <ClCompile Include="framework\sys\threadHandler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Common\dataFormat.h" />
+    <ClInclude Include="app\controller.hpp" />
+    <ClInclude Include="framework\communication\comPortHandler.hpp" />
+    <ClInclude Include="framework\communication\tcpHandler.hpp" />
+    <ClInclude Include="framework\sys\callback.hpp" />
+    <ClInclude Include="framework\sys\msgQueueHandler.hpp" />
+    <ClInclude Include="framework\sys\mutexHandler.hpp" />
+    <ClInclude Include="framework\sys\semaphoreHandler.hpp" />
+    <ClInclude Include="framework\sys\threadHandler.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

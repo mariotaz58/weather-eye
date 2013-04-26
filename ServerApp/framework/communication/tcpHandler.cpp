@@ -18,6 +18,7 @@ class tcpClientPrvate
 {
 public:
     channelHandle *handle;
+    msgQueueHandler *parentQ;
     threadHandler rxThread;
 
     int id;
@@ -32,6 +33,11 @@ tcpServer::tcpServer ()
 
 tcpServer::~tcpServer ()
 {
+}
+
+void tcpServer::setParentMsgQueue (msgQueueHandler *mq)
+{
+    parentQ = mq;
 }
 
 void tcpServer::start ()
@@ -93,6 +99,7 @@ void tcpServer::connectHandler (void *p)
 
         tcpClient *handler = new tcpClient (clientList.size(), client);
         clientList.push_back (handler);
+        handler->setParentMsgQueue (parentQ);
         handler->start ();
     }
 }
@@ -110,6 +117,11 @@ tcpClient::tcpClient (int id, void *hndl)
 tcpClient::~tcpClient ()
 {
     delete d;
+}
+
+void tcpClient::setParentMsgQueue (msgQueueHandler *mq)
+{
+    d->parentQ = mq;
 }
 
 void tcpClient::start ()
@@ -151,6 +163,7 @@ void tcpClient::rxHandler (void *p)
     while (d->runMore)
     {
         receive (buffer, 20, recvSize);
+        d->parentQ->write (buffer, recvSize);
     }
     delete [] buffer;
 }
