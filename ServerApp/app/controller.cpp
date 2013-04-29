@@ -1,4 +1,5 @@
 #include "controller.hpp"
+#include <cstdio>
 
 controller::controller ()
 {
@@ -70,6 +71,7 @@ void controller:: processUCData (const pkt_data *pkt)
                 default:
                     break;
             }
+            break;
 
         case commandVal_Humidity: 
             switch ((operations)pkt->operation)
@@ -85,6 +87,7 @@ void controller:: processUCData (const pkt_data *pkt)
                 default:
                     break;
             }
+            break;
 
         case commandVal_hello: 
             switch ((operations)pkt->operation)
@@ -100,6 +103,7 @@ void controller:: processUCData (const pkt_data *pkt)
                 default:
                     break;
             }
+            break;
 
         case commandVal_ping:
             switch ((operations)pkt->operation)
@@ -115,40 +119,52 @@ void controller:: processUCData (const pkt_data *pkt)
                 default:
                     break;
             }
+            break;
+
+        default:
+            break;
     }
 }
 
 
 void controller:: uc_cmdVal_Temp_Op_status(const pkt_data *pkt)
 {
+    printf ("%s\n", __FUNCTION__);
 }
 
 void controller:: uc_cmdVal_Temp_Op_error(const pkt_data *pkt)
 {
+    printf ("%s\n", __FUNCTION__);
 }
 
 void controller:: uc_cmdVal_Hum_Op_status(const pkt_data *pkt)
 {
+    printf ("%s\n", __FUNCTION__);
 }
 
 void controller:: uc_cmdVal_Hum_Op_error(const pkt_data *pkt)
 {
+    printf ("%s\n", __FUNCTION__);
 }
 
 void controller:: uc_cmdVal_hello_Op_status(const pkt_data *pkt)
 {
+    printf ("%s\n", __FUNCTION__);
 }
 
 void controller:: uc_cmdVal_hello_Op_error(const pkt_data *pkt)
 {
+    printf ("%s\n", __FUNCTION__);
 }
 
 void controller:: uc_cmdVal_ping_Op_status(const pkt_data *pkt)
 {
+    printf ("%s\n", __FUNCTION__);
 }
 
 void controller:: uc_cmdVal_ping_Op_error(const pkt_data *pkt)
 {
+    printf ("%s\n", __FUNCTION__);
 }
 
 void controller:: processMobileData (const pkt_data *pkt)

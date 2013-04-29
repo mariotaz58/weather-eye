@@ -11,6 +11,7 @@ extern "C" {
 
 #define HEADER_BYTE_START   (0xAA)
 #define HEADER_BYTE_END     (0xBB)
+#define FOOTER_BYTE         (0xCC)
 
 typedef struct _pkt_data
 {
@@ -19,8 +20,9 @@ typedef struct _pkt_data
     unsigned char command;
     unsigned char operation;
     unsigned char datalength;
-    unsigned char parameter;
+    unsigned char parameter[12];
     unsigned char checksum;
+    unsigned char footer;
 }pkt_data;
 
 typedef enum _uartReadState
@@ -33,6 +35,7 @@ typedef enum _uartReadState
     uartRead_datalength,
     uartRead_parameter,
     uartRead_checksum,
+    uartRead_footer,
     uartRead_Done
 }uartReadState;
 

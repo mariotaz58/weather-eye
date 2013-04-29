@@ -2,6 +2,7 @@
 #include "threadHandler.hpp"
 #include "dataFormat.h"
 #include <Windows.h>
+#include <cstdio>
 
 class comPortHandlerPrivate
 {
@@ -74,6 +75,7 @@ int comPortHandler::receive (unsigned char *buff, const unsigned int buffSize, u
         Sleep (10);
         if (read > 0)
         {
+            printf ("%x ", readChar);
             if (readChar == HEADER_BYTE_START)
             {
                 memset (buff, 0, buffSize);
@@ -82,6 +84,12 @@ int comPortHandler::receive (unsigned char *buff, const unsigned int buffSize, u
                 d->readState = uartRead_headerByteEnd;
             }
             if ((d->readState != uartRead_headerByteEnd) && (readChar == HEADER_BYTE_END))
+            {
+                memset (buff, 0, buffSize);
+                index = 0;
+                d->readState = uartRead_headerByteStart;
+            }
+            if ((d->readState != uartRead_footer) && (readChar == FOOTER_BYTE))
             {
                 memset (buff, 0, buffSize);
                 index = 0;
@@ -116,6 +124,8 @@ int comPortHandler::receive (unsigned char *buff, const unsigned int buffSize, u
                     buff[index] = readChar;
                     d->readState = uartRead_parameter;
                     numberOfDataByte = readChar;
+                    if (numberOfDataByte == 0)
+                        d->readState = uartRead_checksum;
                     index++;
                     break;
                 case uartRead_parameter:
@@ -126,10 +136,19 @@ int comPortHandler::receive (unsigned char *buff, const unsigned int buffSize, u
                     index++;
                     break;
                 case uartRead_checksum:
+                    index = 18;
                     buff[index] = readChar;
-                    d->readState = uartRead_Done;
+                    d->readState = uartRead_footer;
                     index++;
-                    recvSize = index;
+                    break;
+                case uartRead_footer:
+                    if (readChar == FOOTER_BYTE)
+                    {
+                        buff[index] = readChar;
+                        d->readState = uartRead_Done;
+                        index++;
+                        recvSize = index;
+                    }
                     break;
                 default:
                     break;
@@ -144,7 +163,11 @@ int comPortHandler::send (const unsigned char *buff, const unsigned int buffSize
     if (d->hndl == INVALID_HANDLE_VALUE)
         return -1;
     DWORD ret = 0;
-    WriteFile(d->hndl, buff, buffSize, &ret, NULL);
+    for (unsigned int i = 0; i < buffSize; i++)
+    {
+        WriteFile(d->hndl, &buff[i], 1, &ret, NULL);
+        Sleep (5);
+    }
     return (int)ret;
 }
 
@@ -160,6 +183,7 @@ void comPortHandler::rxHandler (void *p)
     while (d->runMore)
     {
         receive (buffer, 20, recvSize);
+        printf ("\n");
         d->parentQ->write (buffer, recvSize);
     }
     delete [] buffer;
