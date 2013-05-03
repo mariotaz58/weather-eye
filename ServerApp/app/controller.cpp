@@ -258,6 +258,7 @@ void controller::mob_sendTemp_Status (int temp, bool isColdFan, bool isHotFan)
     pkt_data pkt;
     int size = 0;
 
+    printf ("Current Temperature: %d\n", temp);
     pkt.command = (unsigned char)commandVal_Temp;
     pkt.operation = (unsigned char)Op_status;
     pkt.datalength = 3;
