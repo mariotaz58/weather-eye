@@ -45,6 +45,7 @@ typedef enum _commandValue
     commandVal_Humidity,
     commandVal_hello,
     commandVal_ping,
+    commandVal_fan,
     commandVal_TempWarn,
     commandVal_HumidityWarn,
     commandVal_Max

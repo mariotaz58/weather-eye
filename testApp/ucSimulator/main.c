@@ -37,8 +37,8 @@ int main ()
         COMMTIMEOUTS    UartTimeOut;
         memset(&dcb,0,sizeof(dcb));
         dcb.DCBlength = sizeof(dcb);
-        dcb.BaudRate = BAUD_57600;
-        dcb.StopBits = 0;
+        dcb.BaudRate = BAUD_9600;
+        dcb.StopBits = 1;
         dcb.Parity = 0;
         dcb.ByteSize = 8;
 
