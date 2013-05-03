@@ -13,6 +13,11 @@ extern "C" {
 #define HEADER_BYTE_END     (0xBB)
 #define FOOTER_BYTE         (0xCC)
 
+#define COLD_AIR_FAN        (0x01)
+#define HOT_AIR_FAN         (0x02)
+
+#define MAX_TEMP_VAL        (0x2D)
+
 typedef struct _pkt_data
 {
     unsigned char header[2];
@@ -44,6 +49,7 @@ typedef enum _commandValue
     commandVal_Temp = 0,
     commandVal_Humidity,
     commandVal_hello,
+    commandVal_bye,
     commandVal_ping,
     commandVal_fan,
     commandVal_TempWarn,

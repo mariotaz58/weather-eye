@@ -3,6 +3,16 @@
 
 controller::controller ()
 {
+    tempHigh = 25;
+    tempLow = 16;
+    humHigh = 50;
+    humLow = 40;
+
+    curTemp = 20;
+    curHum = 45;
+
+    isFanCold_On = false;
+    isFanHot_On = false;
 }
 
 controller::~controller ()
@@ -53,7 +63,24 @@ void controller::start ()
     connectThread.create (fp, this);
 }
 
-void controller:: processUCData (const pkt_data *pkt)
+int controller::formatPkt (pkt_data *pkt, unsigned char *buff)
+{
+    int index = 0;
+    pkt->header[0] = HEADER_BYTE_START;
+    pkt->header[1] = HEADER_BYTE_END;
+    pkt->sourceID = PC_SOURCE_ID;
+    pkt->footer = FOOTER_BYTE;
+    pkt->checksum = 0;
+
+    memcpy (buff, (void*)pkt, (pkt->datalength + 6));
+    index = (pkt->datalength + 6);
+    buff[index++] = pkt->checksum;
+    buff[(pkt->datalength + 7)] = pkt->footer;
+
+    return (pkt->datalength + 8);
+}
+
+void controller::processUCData (const pkt_data *pkt)
 {
     switch ((commandValue)pkt->command)
     {
@@ -126,48 +153,132 @@ void controller:: processUCData (const pkt_data *pkt)
     }
 }
 
+void controller::processMobileData (const pkt_data *pkt)
+{
+}
 
-void controller:: uc_cmdVal_Temp_Op_status(const pkt_data *pkt)
+void controller::uc_cmdVal_Temp_Op_status(const pkt_data *pkt)
+{
+    printf ("%s\n", __FUNCTION__);
+    curTemp = pkt->parameter[0];
+    if (curTemp > tempHigh)
+    {
+        uc_sendCommand_Fan (COLD_AIR_FAN, true);
+        isFanCold_On = true;
+        isFanHot_On = false;
+    }
+    else if (curTemp < tempLow)
+    {
+        uc_sendCommand_Fan (HOT_AIR_FAN, true);
+        isFanHot_On = true;
+        isFanCold_On = false;
+    }
+    else if (curTemp > MAX_TEMP_VAL)
+    {
+        //TODO: Send command to shutdown system
+    }
+    else if ((curTemp > tempLow) && (curTemp < tempHigh))
+    {
+        if (isFanCold_On)
+        {
+            isFanCold_On = false;
+            uc_sendCommand_Fan (COLD_AIR_FAN, false);
+        }
+        if (isFanHot_On)
+        {
+            isFanHot_On = false;
+            uc_sendCommand_Fan (HOT_AIR_FAN, false);
+        }
+    }
+    mob_sendTemp_Status (curTemp, isFanCold_On, isFanHot_On);
+}
+
+void controller::uc_cmdVal_Temp_Op_error(const pkt_data *pkt)
 {
     printf ("%s\n", __FUNCTION__);
 }
 
-void controller:: uc_cmdVal_Temp_Op_error(const pkt_data *pkt)
+void controller::uc_cmdVal_Hum_Op_status(const pkt_data *pkt)
+{
+    curHum = pkt->parameter[0];
+    if ((curHum > humHigh) || (curHum < humLow))
+    {
+        mob_sendHumidity_Warning (true);
+    }
+    else
+    {
+        mob_sendHumidity_Warning (false);
+    }
+
+    printf ("%s\n", __FUNCTION__);
+}
+
+void controller::uc_cmdVal_Hum_Op_error(const pkt_data *pkt)
 {
     printf ("%s\n", __FUNCTION__);
 }
 
-void controller:: uc_cmdVal_Hum_Op_status(const pkt_data *pkt)
+void controller::uc_cmdVal_hello_Op_status(const pkt_data *pkt)
 {
     printf ("%s\n", __FUNCTION__);
 }
 
-void controller:: uc_cmdVal_Hum_Op_error(const pkt_data *pkt)
+void controller::uc_cmdVal_hello_Op_error(const pkt_data *pkt)
 {
     printf ("%s\n", __FUNCTION__);
 }
 
-void controller:: uc_cmdVal_hello_Op_status(const pkt_data *pkt)
+void controller::uc_cmdVal_ping_Op_status(const pkt_data *pkt)
 {
     printf ("%s\n", __FUNCTION__);
 }
 
-void controller:: uc_cmdVal_hello_Op_error(const pkt_data *pkt)
+void controller::uc_cmdVal_ping_Op_error(const pkt_data *pkt)
 {
     printf ("%s\n", __FUNCTION__);
 }
 
-void controller:: uc_cmdVal_ping_Op_status(const pkt_data *pkt)
+void controller::uc_sendCommand_Fan (int fanID, bool isOn)
 {
-    printf ("%s\n", __FUNCTION__);
+    pkt_data pkt;
+    int size = 0;
+
+    pkt.command = (unsigned char)commandVal_fan;
+    pkt.operation = (unsigned char)Op_set;
+    pkt.datalength = 2;
+    pkt.parameter[0] = fanID;
+    pkt.parameter[1] = (isOn)?(1):(0);
+
+    size = formatPkt (&pkt, sendBuff);
+    com->send (sendBuff, size);
 }
 
-void controller:: uc_cmdVal_ping_Op_error(const pkt_data *pkt)
+void controller::mob_sendTemp_Status (int temp, bool isColdFan, bool isHotFan)
 {
-    printf ("%s\n", __FUNCTION__);
+    pkt_data pkt;
+    int size = 0;
+
+    pkt.command = (unsigned char)commandVal_Temp;
+    pkt.operation = (unsigned char)Op_status;
+    pkt.datalength = 3;
+    pkt.parameter[0] = temp;
+    pkt.parameter[1] = (isColdFan)?(1):(0);
+    pkt.parameter[2] = (isHotFan)?(1):(0);
+
+    size = formatPkt (&pkt, sendBuff);
+    //TODO: Send status to mobile
 }
 
-void controller:: processMobileData (const pkt_data *pkt)
+void controller::mob_sendHumidity_Warning (bool warnOn)
 {
-}
+    pkt_data pkt;
+    int size = 0;
 
+    pkt.command = (unsigned char)commandVal_HumidityWarn;
+    pkt.operation = (unsigned char)Op_status;
+    pkt.datalength = 1;
+    pkt.parameter[0] = (warnOn)?(1):(0);
+
+    size = formatPkt (&pkt, sendBuff);
+    //TODO: Send status to mobile
+}

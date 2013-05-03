@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <stdio.h>
 #include "dataFormat.h"
 
 #define PORT_NAME "COM4"
@@ -22,6 +23,7 @@ void sendSysStatus ();
 
 int gTime = 0;
 int gTemp = 20;
+int gTempDelta = 1;
 int gHum = 40;
 unsigned char sendBuff[20];
 //-----------------------------------------------------------------------------------------------
@@ -72,19 +74,27 @@ void processData (const pkt_data *pkt)
                 sendPingReply ();
             break;
 
-        case commandVal_Temp:
+        case commandVal_fan:
             if (pkt->operation == Op_set)
             {
-                gTemp = pkt->parameter[0];
-                sendTempStatus ();
-            }
-            break;
-
-        case commandVal_Humidity:
-            if (pkt->operation == Op_set)
-            {
-                gHum = pkt->parameter[0];
-                sendHumStatus ();
+                if ((pkt->parameter[0] == COLD_AIR_FAN) && (pkt->parameter[1] == 1))
+                {
+                    gTempDelta = -1;
+                    printf ("Turning ON Cold Air Fan\n");
+                }
+                if ((pkt->parameter[0] == HOT_AIR_FAN) && (pkt->parameter[1] == 1))
+                {
+                    gTempDelta = 1;
+                    printf ("Turning ON Hot Air Fan\n");
+                }
+                if ((pkt->parameter[0] == COLD_AIR_FAN) && (pkt->parameter[1] == 0))
+                {
+                    printf ("Turning OFF Cold Air Fan\n");
+                }
+                if ((pkt->parameter[0] == HOT_AIR_FAN) && (pkt->parameter[1] == 0))
+                {
+                    printf ("Turning OFF Hot Air Fan\n");
+                }
             }
             break;
 
@@ -171,6 +181,7 @@ void sendSysStatus ()
     if (gTime == 300)
     {
         gTime = 0;
+        gTemp += gTempDelta;
         sendTempStatus ();
         sendHumStatus ();
     }
