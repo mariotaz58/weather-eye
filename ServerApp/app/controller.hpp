@@ -16,9 +16,11 @@ public:
     ~controller ();
     void start ();
     void process (void *p);
+    void timeout(void *p);
 
 private:
     threadHandler   connectThread;
+    threadHandler   timerThread;
     msgQueueHandler *mqueuePtr;
     tcpServer       server;
     comPortHandler  *com;
@@ -33,6 +35,9 @@ private:
 
     bool            isFanCold_On;
     bool            isFanHot_On;
+
+    bool            isSensorStarted;
+    bool            tempStatusNeeded;
 
     unsigned char   sendBuff[20];
 
@@ -50,6 +55,7 @@ private:
     void uc_cmdVal_ping_Op_error(const pkt_data *pkt);
 
     void uc_sendCommand_Fan (int fanID, bool isOn);
+    void requestStatusFromUC ();
 
     void mob_sendTemp_Status (int temp, bool isColdFan, bool isHotFan);
     void mob_sendHumidity_Warning (bool warnOn);

@@ -23,9 +23,9 @@ comPortHandler::comPortHandler (const char *portName)
         DCB dcb;
         memset(&dcb,0,sizeof(dcb));
         dcb.DCBlength = sizeof(dcb);
-        dcb.BaudRate = BAUD_9600;
-        dcb.StopBits = 1;
-        dcb.Parity = 0;
+        dcb.BaudRate = CBR_9600;
+        dcb.StopBits = ONESTOPBIT;
+        dcb.Parity = NOPARITY;
         dcb.ByteSize = 8;
 
         SetCommState(d->hndl, &dcb);

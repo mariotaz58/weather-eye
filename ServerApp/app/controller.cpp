@@ -1,4 +1,5 @@
 #include "controller.hpp"
+#include <Windows.h>
 #include <cstdio>
 
 controller::controller ()
@@ -13,10 +14,38 @@ controller::controller ()
 
     isFanCold_On = false;
     isFanHot_On = false;
+
+    isSensorStarted = false;
+    tempStatusNeeded = true;
 }
 
 controller::~controller ()
 {
+}
+
+void controller::timeout(void *p)
+{
+    if (static_cast<controller*>(p) != this)
+    {
+        return;
+    }
+    while (1)
+    {
+        Sleep (2000);
+        if (isSensorStarted)
+        {
+            pkt_data pkt;
+            pkt.header[0] = HEADER_BYTE_START;
+            pkt.header[1] = HEADER_BYTE_END;
+            pkt.sourceID = PC_SOURCE_ID;
+            pkt.command = (unsigned char)commandVal_ping;
+            pkt.operation = (unsigned char)Op_get;
+            pkt.datalength = 2;
+            pkt.footer = FOOTER_BYTE;
+            pkt.checksum = 0;
+            mqueuePtr->write (&pkt, sizeof (pkt_data));
+        }
+    }
 }
 
 void controller::process(void *p)
@@ -36,6 +65,10 @@ void controller::process(void *p)
         {
             case UC_SOURCE_ID:
                 processUCData (pkt);
+                break;
+
+            case PC_SOURCE_ID:
+                requestStatusFromUC ();
                 break;
 
             case MOBILE_SOURCE_ID:
@@ -58,9 +91,13 @@ void controller::start ()
     Slot<void, void*> fp;
     fp = new Callback <controller, void, void*>(this, &controller::process);
 
+    Slot<void, void*> tm;
+    tm = new Callback <controller, void, void*>(this, &controller::timeout);
+
     com->start ();
     server.start ();
     connectThread.create (fp, this);
+    timerThread.create (tm, this);
 }
 
 int controller::formatPkt (pkt_data *pkt, unsigned char *buff)
@@ -221,6 +258,7 @@ void controller::uc_cmdVal_Hum_Op_error(const pkt_data *pkt)
 void controller::uc_cmdVal_hello_Op_status(const pkt_data *pkt)
 {
     printf ("%s\n", __FUNCTION__);
+    isSensorStarted = true;
 }
 
 void controller::uc_cmdVal_hello_Op_error(const pkt_data *pkt)
@@ -248,6 +286,24 @@ void controller::uc_sendCommand_Fan (int fanID, bool isOn)
     pkt.datalength = 2;
     pkt.parameter[0] = fanID;
     pkt.parameter[1] = (isOn)?(1):(0);
+
+    size = formatPkt (&pkt, sendBuff);
+    com->send (sendBuff, size);
+}
+
+void controller::requestStatusFromUC ()
+{
+    pkt_data pkt;
+    int size = 0;
+
+    if (tempStatusNeeded)
+        pkt.command = (unsigned char)commandVal_Temp;
+    else
+        pkt.command = (unsigned char)commandVal_Humidity;
+    tempStatusNeeded = !tempStatusNeeded;
+
+    pkt.operation = (unsigned char)Op_get;
+    pkt.datalength = 0;
 
     size = formatPkt (&pkt, sendBuff);
     com->send (sendBuff, size);

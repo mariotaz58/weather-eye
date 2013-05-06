@@ -19,7 +19,6 @@ void sendHello ();
 void sendPingReply ();
 void sendTempStatus ();
 void sendHumStatus ();
-void sendSysStatus ();
 
 int gTime = 0;
 int gTemp = 20;
@@ -39,9 +38,9 @@ int main ()
         COMMTIMEOUTS    UartTimeOut;
         memset(&dcb,0,sizeof(dcb));
         dcb.DCBlength = sizeof(dcb);
-        dcb.BaudRate = BAUD_9600;
-        dcb.StopBits = 1;
-        dcb.Parity = 0;
+        dcb.BaudRate = CBR_9600;
+        dcb.StopBits = ONESTOPBIT;
+        dcb.Parity = NOPARITY;
         dcb.ByteSize = 8;
 
         SetCommState(d->hndl, &dcb);
@@ -72,6 +71,16 @@ void processData (const pkt_data *pkt)
         case commandVal_ping:
             if (pkt->operation == Op_get)
                 sendPingReply ();
+            break;
+
+        case commandVal_Temp:
+            if (pkt->operation == Op_get)
+                sendTempStatus ();
+            break;
+
+        case commandVal_Humidity:
+            if (pkt->operation == Op_get)
+                sendHumStatus ();
             break;
 
         case commandVal_fan:
@@ -152,6 +161,8 @@ void sendTempStatus ()
     pkt_data pkt;
     int size = 0;
 
+    gTemp += gTempDelta;
+
     pkt.command = (unsigned char)commandVal_Temp;
     pkt.operation = (unsigned char)Op_status;
     pkt.datalength = 1;
@@ -175,18 +186,6 @@ void sendHumStatus ()
     comPortSend (sendBuff, size);
 }
 
-void sendSysStatus ()
-{
-    gTime++;
-    if (gTime == 300)
-    {
-        gTime = 0;
-        gTemp += gTempDelta;
-        sendTempStatus ();
-        sendHumStatus ();
-    }
-}
-
 //----------------------------------------------------------------------------------------------------
 int comPortReceive (unsigned char *buff, const unsigned int buffSize, unsigned int *recvSize)
 {
@@ -205,7 +204,6 @@ int comPortReceive (unsigned char *buff, const unsigned int buffSize, unsigned i
         unsigned char readChar;
         ReadFile (d->hndl, &readChar, 1, &read, NULL);
         Sleep (10);
-        sendSysStatus ();
         if (read > 0)
         {
             if (readChar == HEADER_BYTE_START)
