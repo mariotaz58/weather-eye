@@ -238,6 +238,7 @@ void controller::uc_cmdVal_Temp_Op_error(const pkt_data *pkt)
 void controller::uc_cmdVal_Hum_Op_status(const pkt_data *pkt)
 {
     curHum = pkt->parameter[0];
+    printf ("Current Humidity: %d\n", curHum);
     if ((curHum > humHigh) || (curHum < humLow))
     {
         mob_sendHumidity_Warning (true);
