@@ -45,6 +45,7 @@ private:
 
     void processUCData (const pkt_data *pkt);
     void processMobileData (const pkt_data *pkt);
+
     void uc_cmdVal_Hum_Op_status(const pkt_data *pkt);
     void uc_cmdVal_Hum_Op_error(const pkt_data *pkt);
     void uc_cmdVal_Temp_Op_status(const pkt_data *pkt);
@@ -57,8 +58,12 @@ private:
     void uc_sendCommand_Fan (int fanID, bool isOn);
     void requestStatusFromUC ();
 
+    void mob_cmdVal_Temp_Op_set(const pkt_data *pkt);
+
     void mob_sendTemp_Status (int temp, bool isColdFan, bool isHotFan);
     void mob_sendHumidity_Warning (bool warnOn);
+    void mob_sendBye (int id);
+    void mob_sendTempRange (int id, int high, int low);
 };
 
 #endif

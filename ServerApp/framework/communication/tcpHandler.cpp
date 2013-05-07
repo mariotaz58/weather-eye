@@ -60,7 +60,7 @@ void tcpServer::deleteClient (unsigned int id)
 {
     if (clientList.find(id) != clientList.end ())
     {
-        tcpClient *c = clientList[id];
+        tcpClient *c = clientList.at (id);
         clientList.erase (id);
         delete c;
     }
@@ -111,7 +111,7 @@ void tcpServer::connectHandler (void *p)
         client->recvSocket = ::accept(RxServer, (struct sockaddr*)&from,&fromlen);
         std::cout << "TCP Server: Recv Socket connection, socket ID: " << client->recvSocket << std::endl;
 
-        tcpClient *handler = new tcpClient (clientList.size(), client);
+        tcpClient *handler = new tcpClient (clientCount, client);
         clientList[clientCount++] = handler;
         handler->setParentMsgQueue (parentQ);
         handler->start ();
@@ -121,6 +121,9 @@ void tcpServer::connectHandler (void *p)
 //-----------------------------------------------------------------
 tcpClient* tcpClient::connectRemote (const char *ip)
 {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2,2),&wsaData);
+
     channelHandle *client = new channelHandle;
     client->recvSocket = ::socket(AF_INET, SOCK_STREAM, 0);
     client->sendSocket = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -215,12 +218,12 @@ void tcpClient::rxHandler (void *p)
         return;
     }
 
-    unsigned char *buffer = new unsigned char[MAX_RECV_SIZE];
+    unsigned char *buffer = (unsigned char*)malloc(MAX_RECV_SIZE);
 
     int recvSize = 0;
     while (d->runMore)
     {
-        this->receive (&buffer[sizeof (unsigned int)], MAX_RECV_SIZE, recvSize);
+        this->receive (buffer, MAX_RECV_SIZE, recvSize);
         if (recvSize > 0)
         {
             pkt_data msg;
@@ -229,12 +232,18 @@ void tcpClient::rxHandler (void *p)
             msg.sourceID = buffer[2];
             msg.command = buffer[3];
             msg.operation = buffer[4];
-            msg.datalength = buffer[5];
-            if (msg.datalength > 0)
-                memcpy (msg.parameter, &buffer[6], msg.datalength);
-            msg.checksum = buffer[(6 + msg.datalength)];
-            msg.footer = buffer[(7 + msg.datalength)];
-            d->parentQ->write (buffer, (recvSize + sizeof (unsigned int)));
+            msg.datalength = buffer[5] + 4;
+            msg.parameter [0] = (unsigned char)(d->id & 0x000000FF);
+            msg.parameter [1] = (unsigned char)((d->id & 0x0000FF00) >> 8);
+            msg.parameter [2] = (unsigned char)((d->id & 0x00FF0000) >> 16);
+            msg.parameter [3] = (unsigned char)((d->id & 0xFF000000) >> 24);
+            if (msg.datalength > 4)
+                memcpy (&msg.parameter[4], &buffer[6], buffer[5]);
+            msg.checksum = buffer[(6 + buffer[5])];
+            msg.footer = buffer[(7 + buffer[5])];
+            d->parentQ->write (&msg, sizeof (msg));
+            if (msg.command == (unsigned char)commandVal_bye)
+                d->runMore = false;
         }
         else
         {
@@ -243,12 +252,12 @@ void tcpClient::rxHandler (void *p)
             msg.header[1] = HEADER_BYTE_END;
             msg.sourceID = MOBILE_SOURCE_ID;
             msg.command = commandVal_bye;
-            msg.operation = Op_status;
-            msg.datalength = 4;
-            msg.parameter [0] = (char)(d->id & 0x000000FF);
-            msg.parameter [1] = (char)((d->id & 0x0000FF00) >> 8);
-            msg.parameter [2] = (char)((d->id & 0x00FF0000) >> 16);
-            msg.parameter [3] = (char)((d->id & 0xFF000000) >> 24);
+            msg.operation = Op_error;
+            msg.datalength = 1;
+            msg.parameter [0] = (unsigned char)(d->id & 0x000000FF);
+            msg.parameter [1] = (unsigned char)((d->id & 0x0000FF00) >> 8);
+            msg.parameter [2] = (unsigned char)((d->id & 0x00FF0000) >> 16);
+            msg.parameter [3] = (unsigned char)((d->id & 0xFF000000) >> 24);
             msg.checksum = 0;
             msg.footer = FOOTER_BYTE;
 
@@ -256,5 +265,5 @@ void tcpClient::rxHandler (void *p)
             d->runMore = false;
         }
     }
-    delete [] buffer;
+    free (buffer);
 }

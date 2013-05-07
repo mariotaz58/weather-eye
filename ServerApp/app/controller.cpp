@@ -192,6 +192,45 @@ void controller::processUCData (const pkt_data *pkt)
 
 void controller::processMobileData (const pkt_data *pkt)
 {
+    int id = (int)pkt->parameter [0];
+    id |= (((int)pkt->parameter [1])<< 8);
+    id |= (((int)pkt->parameter [2])<< 16);
+    id |= (((int)pkt->parameter [3])<< 24);
+
+    switch ((commandValue)pkt->command)
+    {
+        case commandVal_hello:
+            if ((operations)pkt->operation == Op_status)
+            {
+                mob_sendTempRange (id, tempHigh, tempLow);
+            }
+            break;
+
+        case commandVal_bye:
+            if ((operations)pkt->operation == Op_status)
+            {
+                mob_sendBye (id);
+                printf ("Client Exiting: %d\n", id);
+            }
+            else if ((operations)pkt->operation == Op_error)
+            {
+                server.deleteClient (id);
+                printf ("Client Terminated: %d\n", id);
+            }
+            break;
+
+        case commandVal_Temp:
+            switch ((operations)pkt->operation)
+            {
+                case Op_set: 
+                    mob_cmdVal_Temp_Op_set(pkt);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+    }
 }
 
 void controller::uc_cmdVal_Temp_Op_status(const pkt_data *pkt)
@@ -310,6 +349,10 @@ void controller::requestStatusFromUC ()
     com->send (sendBuff, size);
 }
 
+void controller::mob_cmdVal_Temp_Op_set(const pkt_data *pkt)
+{
+}
+
 void controller::mob_sendTemp_Status (int temp, bool isColdFan, bool isHotFan)
 {
     pkt_data pkt;
@@ -339,4 +382,34 @@ void controller::mob_sendHumidity_Warning (bool warnOn)
 
     size = formatPkt (&pkt, sendBuff);
     //TODO: Send status to mobile
+}
+
+void controller::mob_sendBye (int id)
+{
+    pkt_data pkt;
+    int size = 0;
+
+    pkt.command = (unsigned char)commandVal_bye;
+    pkt.operation = (unsigned char)Op_status;
+    pkt.datalength = 0;
+
+    size = formatPkt (&pkt, sendBuff);
+    tcpClient *c = server.getClient (id);
+    if (c)
+    {
+        c->send (sendBuff, size);
+        server.deleteClient (id);
+    }
+}
+
+void controller::mob_sendTempRange (int id, int high, int low)
+{
+    pkt_data pkt;
+    int size = 0;
+
+    pkt.command = (unsigned char)commandVal_bye;
+    pkt.operation = (unsigned char)Op_status;
+    pkt.datalength = 0;
+
+    size = formatPkt (&pkt, sendBuff);
 }
