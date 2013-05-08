@@ -10,8 +10,7 @@ public class msgEnums
         commandVal_bye,
         commandVal_ping,
         commandVal_fan,
-        commandVal_TempWarn,
-        commandVal_HumidityWarn,
+        commandVal_TempRange,
         commandVal_Max;
     
         private static ReverseEnumMap<commandValue> map =

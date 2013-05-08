@@ -1,0 +1,188 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity" >
+
+    <TextView
+        android:id="@+id/label_maxTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="18dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/max_temp"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/label_minTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/label_maxTemp"
+        android:layout_alignBottom="@+id/label_maxTemp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="28dp"
+        android:text="@string/min_temp"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <ImageButton
+        android:id="@+id/btnUp_max"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/label_maxTemp"
+        android:layout_below="@+id/label_maxTemp"
+        android:layout_marginLeft="36dp"
+        android:background="@null"
+        android:contentDescription="@+string/empty"
+        android:src="@drawable/up_btn" />
+
+    <TextView
+        android:id="@+id/textMinTemp"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/textMaxTemp"
+        android:layout_alignBottom="@+id/textMaxTemp"
+        android:layout_alignLeft="@+id/label_minTemp"
+        android:layout_alignParentRight="true"
+        android:gravity="center"
+        android:text="@string/unknown"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <ImageButton
+        android:id="@+id/btnDown_max"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/btnUp_max"
+        android:layout_alignTop="@+id/btnDown_min"
+        android:background="@null"
+        android:contentDescription="@+string/empty"
+        android:src="@drawable/down_btn" />
+
+    <TextView
+        android:id="@+id/textMaxTemp"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/label_maxTemp"
+        android:layout_below="@+id/btnUp_max"
+        android:layout_alignParentLeft="true"
+        android:text="@string/unknown"
+        android:gravity="center"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/curtempLabel"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/btnGo"
+        android:layout_marginTop="14dp"
+        android:text="@string/cur_temp"
+        android:gravity="center"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/curHumLabel"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/curtempLabel"
+        android:layout_alignBottom="@+id/curtempLabel"
+        android:layout_alignParentRight="true"
+        android:gravity="center"
+        android:text="@string/cur_hum"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/curHumDisp"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/curTempDisp"
+        android:layout_alignBottom="@+id/curTempDisp"
+        android:layout_alignParentRight="true"
+        android:text="@string/unknown"
+        android:gravity="center"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/curTempDisp"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/curtempLabel"
+        android:text="@string/unknown"
+        android:gravity="center"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <ImageView
+        android:id="@+id/temp_redLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/curTempDisp"
+        android:layout_below="@+id/curTempDisp"
+        android:layout_marginTop="15dp"
+        android:contentDescription="@string/empty"
+        android:src="@drawable/redlight_off" />
+
+    <ImageView
+        android:id="@+id/hum_greenLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/hum_redLight"
+        android:layout_alignParentRight="true"
+        android:contentDescription="@string/empty"
+        android:src="@drawable/greenlight_off" />
+
+    <ImageButton
+        android:id="@+id/btnDown_min"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/btnUp_min"
+        android:layout_below="@+id/textMinTemp"
+        android:background="@null"
+        android:contentDescription="@+string/empty"
+        android:src="@drawable/down_btn" />
+
+    <ImageView
+        android:id="@+id/hum_redLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/label_minTemp"
+        android:layout_alignTop="@+id/temp_greenLight"
+        android:contentDescription="@string/empty"
+        android:src="@drawable/redlight_off" />
+
+    <ImageButton
+        android:id="@+id/btnUp_min"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/textMinTemp"
+        android:layout_alignLeft="@+id/curHumLabel"
+        android:background="@null"
+        android:contentDescription="@+string/empty"
+        android:src="@drawable/up_btn" />
+
+    <ImageButton
+        android:id="@+id/btnGo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btnDown_min"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="24dp"
+        android:background="@null"
+        android:contentDescription="@+string/empty"
+        android:src="@drawable/btn_go" />
+
+    <ImageView
+        android:id="@+id/temp_greenLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/temp_redLight"
+        android:layout_toLeftOf="@+id/btnDown_max"
+        android:contentDescription="@string/empty"
+        android:src="@drawable/greenlight_off" />
+    
+</RelativeLayout>

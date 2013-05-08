@@ -2,7 +2,6 @@ package com.suraily.weathereye;
 
 import java.net.*;
 import java.io.*;
-import android.annotation.TargetApi;
 import android.os.Handler;
 import android.os.Message;
 
@@ -22,6 +21,13 @@ class SocketHandler
         recv.setHandler(hndl);
     }
     
+    SocketHandler (String ip, Handler hndl)
+    {
+        debugMgr.setServerIP(ip);
+        recv = new socketReceiver ();
+        recv.setHandler(hndl);
+    }
+
     public boolean isSocketThreadExited ()
     {
     	return socketThreadExited;
@@ -77,8 +83,7 @@ class SocketHandler
         // Port 20250 is common for all
         private static final int TCP_CLIENT_SEND_PORT = 20249;
         private static final int TCP_CLIENT_RECV_PORT = 20250;
-        protected static final int MSG_ID = 0x1337;
-        protected static final int FINISH_ID = 0x1234;
+        
         Handler myUpdateHandler = null;
         
         public void setHandler (Handler hndl)
@@ -97,9 +102,16 @@ class SocketHandler
             this.commTh.start();
         }
         
+        
         class CommsThread implements Runnable
         {
-            @TargetApi(9)
+            private void sendReady ()
+            {
+                Message m = new Message();
+                m.what = debugMgr.startID();
+                m.obj = null;
+                myUpdateHandler.sendMessage(m);             
+            }
             public void run()
             {
             	while (rxRun)
@@ -138,6 +150,7 @@ class SocketHandler
 	                    {
 	                        byte response[] = new byte[32768];
 	                        int len = 0;
+	                        sendReady ();
 	                        while (rxRun && (len != -1))
 	                        {
 	                            len = is.read(response);
@@ -150,7 +163,7 @@ class SocketHandler
 	                            ob.data = Arrays.copyOf(response, 32768);
 	                            ob.len = len;
 	                            
-	                            m.what = MSG_ID;
+	                            m.what = debugMgr.msgID();
 	                            m.obj = ob;
 	                            myUpdateHandler.sendMessage(m);
 	                        }
@@ -188,7 +201,7 @@ class SocketHandler
             	}
             	socketThreadExited = true;
                 Message m = new Message();
-                m.what = FINISH_ID;
+                m.what = debugMgr.finishID();
                 m.obj = null;
                 myUpdateHandler.sendMessage(m);            	
             }

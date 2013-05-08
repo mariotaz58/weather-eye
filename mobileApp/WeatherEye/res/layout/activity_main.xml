@@ -8,9 +8,42 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
 
-    <TextView
+    <EditText
+        android:id="@+id/ipEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
+        android:layout_alignLeft="@+id/enter_ip"
+        android:layout_alignRight="@+id/enter_ip"
+        android:inputType="phone"
+        android:layout_below="@+id/enter_ip" />
 
+    <ImageButton
+        android:id="@+id/btnGo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/ipEditText"
+        android:layout_marginLeft="23dp"
+        android:layout_toRightOf="@+id/ipEditText"
+        android:background="@null"
+        android:contentDescription="@+string/empty"
+        android:src="@drawable/btn_go" />
+
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="@+string/empty"
+        android:src="@drawable/img_logo" />
+
+    <TextView
+        android:id="@+id/enter_ip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/logo"
+        android:layout_marginTop="21dp"
+        android:text="@string/enter_ip" />
+    
 </RelativeLayout>

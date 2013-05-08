@@ -3,6 +3,7 @@
 #include "threadHandler.hpp"
 #include "msgQueueHandler.hpp"
 #include <map>
+#include <vector>
 
 #define MAX_RECV_SIZE               (20)
 
@@ -27,10 +28,14 @@ public:
     tcpClient* getClient (unsigned int id);
     void deleteClient (unsigned int id);
 
+    int getClientCount () const;
+
 private:
     std::map <unsigned int, tcpClient*> clientList;
+    std::vector <tcpClient*> deleteList;
     threadHandler connectThread;
     msgQueueHandler *parentQ;
+    unsigned int clientCount;
     void connectHandler (void *p);
 };
 

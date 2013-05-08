@@ -2,6 +2,13 @@
 #include <Windows.h>
 #include <cstdio>
 
+#define SIMULATE_UC_INTERNALLY
+
+#ifdef SIMULATE_UC_INTERNALLY
+static int gTemp = 20;
+static int gTempDelta = 1;
+#endif
+
 controller::controller ()
 {
     tempHigh = 25;
@@ -15,7 +22,11 @@ controller::controller ()
     isFanCold_On = false;
     isFanHot_On = false;
 
+#ifdef SIMULATE_UC_INTERNALLY
+    isSensorStarted = true;
+#else
     isSensorStarted = false;
+#endif
     tempStatusNeeded = true;
 }
 
@@ -219,7 +230,7 @@ void controller::processMobileData (const pkt_data *pkt)
             }
             break;
 
-        case commandVal_Temp:
+        case commandVal_TempRange:
             switch ((operations)pkt->operation)
             {
                 case Op_set: 
@@ -242,12 +253,18 @@ void controller::uc_cmdVal_Temp_Op_status(const pkt_data *pkt)
         uc_sendCommand_Fan (COLD_AIR_FAN, true);
         isFanCold_On = true;
         isFanHot_On = false;
+#ifdef SIMULATE_UC_INTERNALLY
+        gTempDelta = -1;
+#endif
     }
     else if (curTemp < tempLow)
     {
         uc_sendCommand_Fan (HOT_AIR_FAN, true);
         isFanHot_On = true;
         isFanCold_On = false;
+#ifdef SIMULATE_UC_INTERNALLY
+        gTempDelta = 1;
+#endif
     }
     else if (curTemp > MAX_TEMP_VAL)
     {
@@ -280,11 +297,11 @@ void controller::uc_cmdVal_Hum_Op_status(const pkt_data *pkt)
     printf ("Current Humidity: %d\n", curHum);
     if ((curHum > humHigh) || (curHum < humLow))
     {
-        mob_sendHumidity_Warning (true);
+        mob_sendHumidity_Status (curHum, true);
     }
     else
     {
-        mob_sendHumidity_Warning (false);
+        mob_sendHumidity_Status (curHum, false);
     }
 
     printf ("%s\n", __FUNCTION__);
@@ -335,18 +352,36 @@ void controller::requestStatusFromUC ()
 {
     pkt_data pkt;
     int size = 0;
-
     if (tempStatusNeeded)
         pkt.command = (unsigned char)commandVal_Temp;
     else
         pkt.command = (unsigned char)commandVal_Humidity;
-    tempStatusNeeded = !tempStatusNeeded;
 
+#ifndef SIMULATE_UC_INTERNALLY
     pkt.operation = (unsigned char)Op_get;
     pkt.datalength = 0;
 
     size = formatPkt (&pkt, sendBuff);
     com->send (sendBuff, size);
+#else
+    pkt.operation = (unsigned char)Op_status;
+    pkt.datalength = 1;
+    pkt.header[0] = HEADER_BYTE_START;
+    pkt.header[1] = HEADER_BYTE_END;
+    pkt.sourceID = UC_SOURCE_ID;
+    pkt.footer = FOOTER_BYTE;
+    pkt.checksum = 0;
+    if (tempStatusNeeded)
+    {
+        pkt.parameter[0] = gTemp;
+        gTemp += gTempDelta;
+    }
+    else
+        pkt.parameter[0] = 40; // 40% humidity
+
+    mqueuePtr->write (&pkt, sizeof (pkt));
+#endif
+    tempStatusNeeded = !tempStatusNeeded;
 }
 
 void controller::mob_cmdVal_Temp_Op_set(const pkt_data *pkt)
@@ -367,21 +402,36 @@ void controller::mob_sendTemp_Status (int temp, bool isColdFan, bool isHotFan)
     pkt.parameter[2] = (isHotFan)?(1):(0);
 
     size = formatPkt (&pkt, sendBuff);
-    //TODO: Send status to mobile
+    for (int i = 1; i < server.getClientCount (); i++)
+    {
+        tcpClient *c = server.getClient (i);
+        if (c)
+        {
+            c->send (sendBuff, size);
+        }
+    }
 }
 
-void controller::mob_sendHumidity_Warning (bool warnOn)
+void controller::mob_sendHumidity_Status (int hum, bool warnOn)
 {
     pkt_data pkt;
     int size = 0;
 
-    pkt.command = (unsigned char)commandVal_HumidityWarn;
+    pkt.command = (unsigned char)commandVal_Humidity;
     pkt.operation = (unsigned char)Op_status;
-    pkt.datalength = 1;
-    pkt.parameter[0] = (warnOn)?(1):(0);
+    pkt.datalength = 2;
+    pkt.parameter[0] = (unsigned char)hum;
+    pkt.parameter[1] = (warnOn)?(1):(0);
 
     size = formatPkt (&pkt, sendBuff);
-    //TODO: Send status to mobile
+    for (int i = 1; i < server.getClientCount (); i++)
+    {
+        tcpClient *c = server.getClient (i);
+        if (c)
+        {
+            c->send (sendBuff, size);
+        }
+    }
 }
 
 void controller::mob_sendBye (int id)
@@ -407,9 +457,16 @@ void controller::mob_sendTempRange (int id, int high, int low)
     pkt_data pkt;
     int size = 0;
 
-    pkt.command = (unsigned char)commandVal_bye;
+    pkt.command = (unsigned char)commandVal_TempRange;
     pkt.operation = (unsigned char)Op_status;
-    pkt.datalength = 0;
+    pkt.datalength = 2;
+    pkt.parameter[0] = (unsigned char)high;
+    pkt.parameter[1] = (unsigned char)low;
 
     size = formatPkt (&pkt, sendBuff);
+    tcpClient *c = server.getClient (id);
+    if (c)
+    {
+        c->send (sendBuff, size);
+    }
 }

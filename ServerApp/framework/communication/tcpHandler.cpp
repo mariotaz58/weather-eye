@@ -30,10 +30,14 @@ public:
 //-----------------------------------------------------------------
 tcpServer::tcpServer ()
 {
+    clientCount = 1;
+    parentQ = 0;
 }
 
 tcpServer::~tcpServer ()
 {
+    for (int i = 0; i < deleteList.size (); i++)
+        delete deleteList[i];
 }
 
 void tcpServer::setParentMsgQueue (msgQueueHandler *mq)
@@ -62,8 +66,13 @@ void tcpServer::deleteClient (unsigned int id)
     {
         tcpClient *c = clientList.at (id);
         clientList.erase (id);
-        delete c;
+        deleteList.push_back(c);
     }
+}
+
+int tcpServer::getClientCount () const
+{
+    return clientCount;
 }
 
 void tcpServer::connectHandler (void *p)
@@ -94,8 +103,6 @@ void tcpServer::connectHandler (void *p)
     local.sin_port = htons((u_short)TCP_SERVER_RECV_PORT); //port to use
     RxServer = ::socket(AF_INET,SOCK_STREAM, 0);
     ::bind(RxServer,(struct sockaddr*)&local,sizeof(local));
-
-    unsigned int clientCount = 1;
 
     while (1)
     {
