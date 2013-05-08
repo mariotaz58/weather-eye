@@ -58,7 +58,7 @@ private:
     void uc_sendCommand_Fan (int fanID, bool isOn);
     void requestStatusFromUC ();
 
-    void mob_cmdVal_Temp_Op_set(const pkt_data *pkt);
+    void mob_cmdVal_TempRange_Op_set(const pkt_data *pkt);
 
     void mob_sendTemp_Status (int temp, bool isColdFan, bool isHotFan);
     void mob_sendHumidity_Status (int hum, bool warnOn);

@@ -7,6 +7,8 @@
 #ifdef SIMULATE_UC_INTERNALLY
 static int gTemp = 20;
 static int gTempDelta = 1;
+static int gHumidity = 40;
+static int gHumDelta = 1;
 #endif
 
 controller::controller ()
@@ -234,7 +236,7 @@ void controller::processMobileData (const pkt_data *pkt)
             switch ((operations)pkt->operation)
             {
                 case Op_set: 
-                    mob_cmdVal_Temp_Op_set(pkt);
+                    mob_cmdVal_TempRange_Op_set(pkt);
                     break;
 
                 default:
@@ -377,15 +379,24 @@ void controller::requestStatusFromUC ()
         gTemp += gTempDelta;
     }
     else
-        pkt.parameter[0] = 40; // 40% humidity
+    {
+        pkt.parameter[0] = gHumidity;
+        gHumidity += gHumDelta;
+        if (gHumidity > (humHigh + 2))
+            gHumDelta = -1;
+        if (gHumidity < (humLow - 2))
+            gHumDelta = 1;
+    }
 
     mqueuePtr->write (&pkt, sizeof (pkt));
 #endif
     tempStatusNeeded = !tempStatusNeeded;
 }
 
-void controller::mob_cmdVal_Temp_Op_set(const pkt_data *pkt)
+void controller::mob_cmdVal_TempRange_Op_set(const pkt_data *pkt)
 {
+    tempHigh = pkt->parameter [4];
+    tempLow = pkt->parameter [5];
 }
 
 void controller::mob_sendTemp_Status (int temp, bool isColdFan, bool isHotFan)

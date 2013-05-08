@@ -41,7 +41,7 @@ public class serverCommunicator
 
     public void sendTempRange (int highTemp, int lowTemp)
     {
-        int size = setHeader(msgEnums.commandValue.commandVal_Temp.convert(), msgEnums.operations.Op_set.convert(), 2);
+        int size = setHeader(msgEnums.commandValue.commandVal_TempRange.convert(), msgEnums.operations.Op_set.convert(), 2);
         data[6] = (byte)highTemp;
         data[7] = (byte)lowTemp;
         sockMgr.sendMessage(data, size);

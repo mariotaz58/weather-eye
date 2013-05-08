@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
     private static IncomingHandler m_handler;
+    private Handler timeHandler = new Handler();
     static
     {
         m_handler = new IncomingHandler (); 
@@ -28,6 +29,11 @@ public class MainActivity extends Activity {
     private serverCommunicator comm = null;
     private int highTemp = 0;
     private int lowTemp = 0;
+
+    private int highTemp_old = 0;
+    private int lowTemp_old = 0;
+
+    private boolean maxTempReady = false;
     
     private static final Pattern PARTIAl_IP_ADDRESS =
             Pattern.compile("^((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])\\.){0,3}"+
@@ -224,6 +230,81 @@ public class MainActivity extends Activity {
         System.out.println("processCommand_TempRange");
         highTemp = (int)data[6];
         lowTemp = (int)data[7];
+        
+        highTemp_old = highTemp;
+        lowTemp_old = lowTemp;
+
+        if (!maxTempReady)
+        {
+            maxTempReady = true;
+            ImageButton maxUp = (ImageButton)findViewById(R.id.btnUp_max);
+            maxUp.setOnClickListener(new View.OnClickListener()
+            {
+                public void onClick(View arg0) 
+                {
+                    stopTimer ();
+                    highTemp++;
+                    if (highTemp > 45)
+                        highTemp = 45;
+                    updateTempRangeDisplay ();
+                    startTimer ();
+                }
+            });
+            
+            ImageButton maxDown = (ImageButton)findViewById(R.id.btnDown_max);
+            maxDown.setOnClickListener(new View.OnClickListener()
+            {
+                public void onClick(View arg0) 
+                {
+                    stopTimer ();
+                    highTemp--;
+                    if (highTemp == (lowTemp +2))
+                        highTemp++;
+                    updateTempRangeDisplay ();
+                    startTimer ();
+                }
+            });
+
+            ImageButton minUp = (ImageButton)findViewById(R.id.btnUp_min);
+            minUp.setOnClickListener(new View.OnClickListener()
+            {
+                public void onClick(View arg0) 
+                {
+                    stopTimer ();
+                    lowTemp++;
+                    if (lowTemp > (highTemp - 2))
+                        lowTemp--;
+                    updateTempRangeDisplay ();
+                    startTimer ();
+                }
+            });
+
+            ImageButton minDown = (ImageButton)findViewById(R.id.btnDown_min);
+            minDown.setOnClickListener(new View.OnClickListener()
+            {
+                public void onClick(View arg0) 
+                {
+                    stopTimer ();
+                    lowTemp--;
+                    if (lowTemp < 10)
+                        lowTemp++;
+                    updateTempRangeDisplay ();
+                    startTimer ();
+                }
+            });
+
+            ImageButton goBtn = (ImageButton)findViewById(R.id.btnGo);
+            goBtn.setOnClickListener(new View.OnClickListener()
+            {
+                public void onClick(View arg0) 
+                {
+                    stopTimer ();
+                    highTemp_old = highTemp;
+                    lowTemp_old = lowTemp;
+                    comm.sendTempRange(highTemp, lowTemp);
+                }
+            });
+        }
         updateTempRangeDisplay ();
     }
     
@@ -238,5 +319,26 @@ public class MainActivity extends Activity {
         String lowText = Integer.toString(lowTemp);
         low.setText(lowText);
     }
+    
+    private void stopTimer ()
+    {
+        timeHandler.removeCallbacks(mUpdateTimeTask);
+    }
+    
+    private void startTimer ()
+    {
+        timeHandler.removeCallbacks(mUpdateTimeTask);
+        timeHandler.postDelayed(mUpdateTimeTask, 3000);        
+    }
+    
+    private Runnable mUpdateTimeTask = new Runnable()
+    {
+        public void run()
+        {
+            highTemp = highTemp_old;
+            lowTemp = lowTemp_old;
+            updateTempRangeDisplay ();
+        }
+    };
 }
 
