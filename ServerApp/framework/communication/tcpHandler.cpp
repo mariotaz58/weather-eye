@@ -36,7 +36,7 @@ tcpServer::tcpServer ()
 
 tcpServer::~tcpServer ()
 {
-    for (int i = 0; i < deleteList.size (); i++)
+    for (unsigned int i = 0; i < deleteList.size (); i++)
         delete deleteList[i];
 }
 
